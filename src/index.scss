@@ -1,0 +1,10 @@
+@import '@axxes/design-system/dist/styles/index.css';
+
+body {
+  padding: 25px 15px;
+}
+
+button[disabled] {
+  opacity: 0.3;
+  cursor: not-allowed !important;
+}

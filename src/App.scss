@@ -1,0 +1,42 @@
+.axxes-card {
+  margin-bottom: 25px;
+}
+
+.axxes-custom-dropdown {
+  margin-bottom: 25px;
+}
+
+.players-table {
+  table {
+    width: 100%;
+  }
+
+  th,
+  td {
+    padding: 15px 15px;
+    border-bottom: 1px solid var(--axxes-grey--lighter);
+  }
+
+  th {
+    text-align: left;
+  }
+
+  tr td {
+    &:last-child {
+    }
+  }
+
+  .legend {
+    text-align: center;
+
+    .fa-star {
+      color: var(--axxes-accent);
+    }
+  }
+}
+
+.levels {
+  .fastest {
+    color: var(--axxes-accent);
+  }
+}

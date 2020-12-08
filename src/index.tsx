@@ -1,8 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+import './index.scss';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+
+document.cookie =
+  'session=53616c7465645f5f64657d5fff68b70546e8ece72c248e9501ad180b0e382ed3df78686cb8e135bc3c63c7ef36ade93b';
 
 ReactDOM.render(
   <React.StrictMode>
