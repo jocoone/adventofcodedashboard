@@ -1,5 +1,3 @@
-import { createEnumMember } from 'typescript';
-
 export const GROUPS: string[] = [
   'FRONTEND',
   'JAVA',
@@ -9,7 +7,12 @@ export const GROUPS: string[] = [
 ];
 
 export const PLAYERS: any = {
-  FRONTEND: ['Joey Comhaire', 'Arno Chauveau', 'Lorenzo Borghs', 'sh33dafi'],
+  FRONTEND: [
+    'Joey Comhaire',
+    'Arno Chauveau',
+    'Lorenzo Borghs',
+    'Yannick Houbrix',
+  ],
   JAVA: [
     'Arne Hendrickx',
     'selske',
@@ -70,17 +73,7 @@ export function getMaxLevel(members: Member[]): number {
 }
 
 export function getLastStarAchieved(member: Member): number {
-  let lastStarAchieved = 0;
-  Object.values(member.completion_day_level).forEach((day) => {
-    Object.values(day)
-      .map((d: Level) => d.get_star_ts)
-      .forEach((ts) => {
-        if (Number(ts) > lastStarAchieved) {
-          lastStarAchieved = Number(ts);
-        }
-      });
-  });
-  return lastStarAchieved;
+  return Number(member.last_star_ts);
 }
 
 export function isFastestOfDay(time: number, day: string, members: Member[]) {
@@ -105,9 +98,11 @@ export interface Level {
 }
 
 export interface Member {
+  id: string;
   name: string;
   stars: number;
   local_score: number;
+  last_star_ts: string;
   completion_day_level: {
     [key: string]: {
       [key: string]: Level;

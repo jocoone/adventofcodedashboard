@@ -3,7 +3,12 @@ import { Input, Card, Dropdown, Item, CardContent } from '@axxes/design-system';
 import { Doughnut, HorizontalBar } from 'react-chartjs-2';
 import http from './http';
 import './App.scss';
-import { averageStarsPerGroup, getPlayersData, totalStars } from './charts';
+import {
+  averageStarsPerGroup,
+  getPlayersData,
+  getPlayersPerCCData,
+  totalStars,
+} from './charts';
 import {
   getLastStarAchieved,
   getMaxLevel,
@@ -26,6 +31,10 @@ const GRAPHS = [
   {
     name: 'Stars / CC',
     value: 'STARS_PER_CC',
+  },
+  {
+    name: 'Players / CC',
+    value: 'PLAYERS_PER_CC',
   },
   {
     name: 'Average Stars / CC',
@@ -77,7 +86,7 @@ function Levels({
       }
     }
     setLevels(levels);
-  }, [member, maxLevel]);
+  }, [member, otherMembers, maxLevel]);
 
   return <div className="levels">{levels.map((level) => level)}</div>;
 }
@@ -102,6 +111,7 @@ function App() {
   const [averageData, setAverageData] = useState<any>();
   const [totalStarsData, setTotalStars] = useState<any>();
   const [players, setPlayers] = useState<any>();
+  const [playersPerCCData, setPlayersPerCCData] = useState<any>();
   const [maxLevel, setMaxLevel] = useState<number>(0);
   const [graph, setGraph] = useState<Item>(GRAPHS[0]);
 
@@ -110,6 +120,7 @@ function App() {
     setAverageData(averageStarsPerGroup(data));
     setTotalStars(totalStars(data));
     const players = getSortedPlayersByStars(data);
+    setPlayersPerCCData(getPlayersPerCCData(players));
     setPlayers(players);
     setMaxLevel(getMaxLevel(players));
   }, [data]);
@@ -173,6 +184,12 @@ function App() {
               <Doughnut data={totalStarsData.chartData} />
             </div>
           )}
+          {playersPerCCData && graph.value === 'PLAYERS_PER_CC' && (
+            <div>
+              <h3>Total Players: {playersPerCCData.totalPlayers}</h3>
+              <Doughnut data={playersPerCCData.chartData} />
+            </div>
+          )}
           {players && graph.value === 'SCORE' && (
             <div className="players-table">
               <h3>Active Players: {players.length}</h3>
@@ -183,17 +200,18 @@ function App() {
               <table>
                 <thead>
                   <tr>
-                    <th></th>
+                    <th>#</th>
                     <th>Player</th>
                     <th>CC</th>
                     <th>Stars</th>
                     <th>Levels</th>
+                    <th>Score</th>
                     <th>Last Star achieved</th>
                   </tr>
                 </thead>
                 <tbody>
                   {players.map((player: Member, index: number) => (
-                    <tr key={player.name}>
+                    <tr key={player.id}>
                       <td>{index + 1}</td>
                       <td>
                         <b>{player.name}</b>
@@ -207,6 +225,7 @@ function App() {
                           otherMembers={players}
                         />
                       </td>
+                      <td>{player.local_score}</td>
                       <td>
                         <FormatDate
                           date={new Date(getLastStarAchieved(player) * 1000)}
