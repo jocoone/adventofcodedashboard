@@ -30,6 +30,7 @@ export const PLAYERS: any = {
     'LorenzCleymans',
     'Dario',
     'Tom Houben',
+    '1114001',
   ],
   TESTING: ['JohanLaebens', 'stanleywong123', 'Bart Van Raemdonck'],
   INFRA: ['Gertjan Roggemans'],
@@ -37,9 +38,7 @@ export const PLAYERS: any = {
 
 export function getPlayerInfo(members: Member[], player: string) {
   const p = members.find((member) => member.name === player);
-  const cc = Object.keys(PLAYERS).find((cc) =>
-    PLAYERS[cc].includes((p && p.name) || '')
-  );
+  const cc = Object.keys(PLAYERS).find((cc) => PLAYERS[cc].includes(player));
   return {
     ...p,
     cc,

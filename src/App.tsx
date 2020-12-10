@@ -1,11 +1,13 @@
 import React, { useEffect, useState, ReactElement } from 'react';
 import { Input, Card, Dropdown, Item, CardContent } from '@axxes/design-system';
-import { Doughnut, HorizontalBar } from 'react-chartjs-2';
+import { Doughnut, HorizontalBar, Line } from 'react-chartjs-2';
 import http from './http';
 import './App.scss';
 import {
+  averageScorePerGroup,
   averageStarsPerGroup,
   getPlayersData,
+  getPlayerSolveTimes,
   getPlayersPerCCData,
   totalStars,
 } from './charts';
@@ -21,12 +23,16 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStar, faStarHalfAlt } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarEmpty } from '@fortawesome/free-regular-svg-icons';
 
-const d = require('./data.json');
+// const d = require('./data.json');
 
 const GRAPHS = [
   {
     name: 'Score',
     value: 'SCORE',
+  },
+  {
+    name: 'Solve Time per player',
+    value: 'SOLVE_TIME',
   },
   {
     name: 'Stars / CC',
@@ -39,6 +45,10 @@ const GRAPHS = [
   {
     name: 'Average Stars / CC',
     value: 'AVERAGE_STARS_PER_CC',
+  },
+  {
+    name: 'Average Score / CC',
+    value: 'AVERAGE_SCORE_PER_CC',
   },
   {
     name: 'Total Stars Spread',
@@ -64,6 +74,7 @@ function Levels({
         if (member.completion_day_level[`${i + 1}`]['2']) {
           levels.push(
             <FontAwesomeIcon
+              key={i}
               icon={faStar}
               className={
                 isFastestOfDay(
@@ -79,10 +90,10 @@ function Levels({
             />
           );
         } else {
-          levels.push(<FontAwesomeIcon icon={faStarHalfAlt} />);
+          levels.push(<FontAwesomeIcon icon={faStarHalfAlt} key={i} />);
         }
       } else {
-        levels.push(<FontAwesomeIcon icon={faStarEmpty} />);
+        levels.push(<FontAwesomeIcon icon={faStarEmpty} key={i} />);
       }
     }
     setLevels(levels);
@@ -94,7 +105,7 @@ function Levels({
 function FormatDate({ date }: { date: Date }) {
   return (
     <span>{`${date.getDate() < 10 ? '0' + date.getDate() : date.getDate()}/${
-      date.getMonth() < 10 ? '0' + date.getMonth() : date.getMonth()
+      date.getMonth() < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
     }/${date.getFullYear()} ${
       date.getHours() < 10 ? '0' + date.getHours() : date.getHours()
     }:${date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()}:${
@@ -103,27 +114,47 @@ function FormatDate({ date }: { date: Date }) {
   );
 }
 
+function MemberTime({ members }: { members: Member[] }) {
+  const [options] = useState<Item[]>(
+    members.map((member) => ({
+      name: member.name || `Anonymous #${member.id}`,
+      value: member.id,
+    }))
+  );
+  const [selectedMember, selectMember] = useState<Item>(options[0]);
+  return (
+    <>
+      <Dropdown
+        title="Player"
+        items={options}
+        value={selectedMember}
+        setValue={selectMember}
+      />
+      <Line
+        data={
+          getPlayerSolveTimes(
+            members.find((member) => member.id === selectedMember.value)
+          )?.chartData
+        }
+      />
+    </>
+  );
+}
+
 function App() {
-  const [url, updateUrl] = useState<string>();
+  const [url, updateUrl] = useState<string>(
+    '/2020/leaderboard/private/view/152724.json'
+  );
   const [queryError, setQueryError] = useState<boolean>(false);
-  const [data, setdata] = useState<any>(d);
+  const [data, setdata] = useState<any>();
   const [playerData, setPlayerData] = useState<any>();
-  const [averageData, setAverageData] = useState<any>();
+  const [averageStarData, setAverageStarData] = useState<any>();
+  const [averageScoreData, setAverageScoreData] = useState<any>();
   const [totalStarsData, setTotalStars] = useState<any>();
   const [players, setPlayers] = useState<any>();
   const [playersPerCCData, setPlayersPerCCData] = useState<any>();
   const [maxLevel, setMaxLevel] = useState<number>(0);
   const [graph, setGraph] = useState<Item>(GRAPHS[0]);
-
-  useEffect(() => {
-    setPlayerData(getPlayersData(data));
-    setAverageData(averageStarsPerGroup(data));
-    setTotalStars(totalStars(data));
-    const players = getSortedPlayersByStars(data);
-    setPlayersPerCCData(getPlayersPerCCData(players));
-    setPlayers(players);
-    setMaxLevel(getMaxLevel(players));
-  }, [data]);
 
   const refresh = () => {
     setQueryError(false);
@@ -131,6 +162,14 @@ function App() {
       .get(`/api${url}`)
       .then(({ data }) => {
         setdata(data);
+        setPlayerData(getPlayersData(data));
+        setAverageStarData(averageStarsPerGroup(data));
+        setAverageScoreData(averageScorePerGroup(data));
+        setTotalStars(totalStars(data));
+        const players = getSortedPlayersByStars(data);
+        setPlayersPerCCData(getPlayersPerCCData(players));
+        setPlayers(players);
+        setMaxLevel(getMaxLevel(players));
       })
       .catch(() => setQueryError(true));
   };
@@ -144,6 +183,7 @@ function App() {
             warning={queryError}
             title="url"
             name="url"
+            value={url}
             onChange={({ target }) => updateUrl(target.value)}
             placeholder="/2020/leaderboard/private/view/12345.json"
           />
@@ -175,8 +215,11 @@ function App() {
               <HorizontalBar data={playerData.chartData} />
             </div>
           )}
-          {averageData && graph.value === 'AVERAGE_STARS_PER_CC' && (
-            <HorizontalBar data={averageData.chartData} />
+          {averageStarData && graph.value === 'AVERAGE_STARS_PER_CC' && (
+            <HorizontalBar data={averageStarData.chartData} />
+          )}
+          {averageScoreData && graph.value === 'AVERAGE_SCORE_PER_CC' && (
+            <HorizontalBar data={averageScoreData.chartData} />
           )}
           {totalStarsData && graph.value === 'TOTAL_STARS_SPREAD' && (
             <div>
@@ -189,6 +232,9 @@ function App() {
               <h3>Total Players: {playersPerCCData.totalPlayers}</h3>
               <Doughnut data={playersPerCCData.chartData} />
             </div>
+          )}
+          {players && graph.value === 'SOLVE_TIME' && (
+            <MemberTime members={players} />
           )}
           {players && graph.value === 'SCORE' && (
             <div className="players-table">
@@ -214,9 +260,11 @@ function App() {
                     <tr key={player.id}>
                       <td>{index + 1}</td>
                       <td>
-                        <b>{player.name}</b>
+                        <b>{player.name || `Anonymous #${player.id}`}</b>
                       </td>
-                      <td>{getPlayerInfo(players, player.name).cc}</td>
+                      <td>
+                        {getPlayerInfo(players, player.name || player.id).cc}
+                      </td>
                       <td>{player.stars}</td>
                       <td>
                         <Levels
