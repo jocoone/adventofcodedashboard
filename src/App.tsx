@@ -143,7 +143,7 @@ function MemberTime({ members }: { members: Member[] }) {
 
 function App() {
   const [url, updateUrl] = useState<string>(
-    '/2020/leaderboard/private/view/152724.json'
+    `/2020/leaderboard/private/view/152724.json`
   );
   const [queryError, setQueryError] = useState<boolean>(false);
   const [data, setdata] = useState<any>();
@@ -157,21 +157,26 @@ function App() {
   const [graph, setGraph] = useState<Item>(GRAPHS[0]);
 
   const refresh = () => {
-    setQueryError(false);
-    http
-      .get(`/api${url}`)
-      .then(({ data }) => {
-        setdata(data);
-        setPlayerData(getPlayersData(data));
-        setAverageStarData(averageStarsPerGroup(data));
-        setAverageScoreData(averageScorePerGroup(data));
-        setTotalStars(totalStars(data));
-        const players = getSortedPlayersByStars(data);
-        setPlayersPerCCData(getPlayersPerCCData(players));
-        setPlayers(players);
-        setMaxLevel(getMaxLevel(players));
-      })
-      .catch(() => setQueryError(true));
+    if (url) {
+      setQueryError(false);
+      const baseUrl = document.location.href.includes('localhost')
+        ? '/api'
+        : '';
+      http
+        .get(`${baseUrl}${url}`)
+        .then(({ data }) => {
+          setdata(data);
+          setPlayerData(getPlayersData(data));
+          setAverageStarData(averageStarsPerGroup(data));
+          setAverageScoreData(averageScorePerGroup(data));
+          setTotalStars(totalStars(data));
+          const players = getSortedPlayersByStars(data);
+          setPlayersPerCCData(getPlayersPerCCData(players));
+          setPlayers(players);
+          setMaxLevel(getMaxLevel(players));
+        })
+        .catch(() => setQueryError(true));
+    }
   };
 
   return (
@@ -183,7 +188,7 @@ function App() {
             warning={queryError}
             title="url"
             name="url"
-            value={url}
+            defaultValue={url}
             onChange={({ target }) => updateUrl(target.value)}
             placeholder="/2020/leaderboard/private/view/12345.json"
           />

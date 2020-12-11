@@ -23,6 +23,7 @@ export const PLAYERS: any = {
     'Pieter Drijkoningen',
     'mathiasclaus',
     'Cel Pynenborg',
+    'JorgiLeus',
   ],
   '.NET': [
     'leechuckfon',
